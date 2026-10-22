@@ -1,0 +1,14 @@
+PRAGMA foreign_keys=ON;
+CREATE TABLE IF NOT EXISTS Users(id INTEGER PRIMARY KEY, login TEXT NOT NULL UNIQUE, password TEXT NOT NULL, role TEXT NOT NULL CHECK(role IN ('admin','accountant')), active INTEGER NOT NULL DEFAULT 1);
+CREATE TABLE IF NOT EXISTS Departments(id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE);
+CREATE TABLE IF NOT EXISTS Positions(id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE);
+CREATE TABLE IF NOT EXISTS Employees(id INTEGER PRIMARY KEY, number TEXT NOT NULL UNIQUE, name TEXT NOT NULL, department_id INTEGER NOT NULL REFERENCES Departments(id), position_id INTEGER NOT NULL REFERENCES Positions(id), hired TEXT NOT NULL, dismissed TEXT, pay_type TEXT NOT NULL CHECK(pay_type IN ('salary','hourly')), rate TEXT NOT NULL, notes TEXT NOT NULL DEFAULT '');
+CREATE TABLE IF NOT EXISTS Timesheets(id INTEGER PRIMARY KEY, employee_id INTEGER NOT NULL REFERENCES Employees(id), period TEXT NOT NULL, data TEXT NOT NULL, UNIQUE(employee_id,period));
+CREATE TABLE IF NOT EXISTS TaxSettings(id INTEGER PRIMARY KEY, starts TEXT NOT NULL, ends TEXT NOT NULL, data TEXT NOT NULL, CHECK(starts<=ends));
+CREATE TABLE IF NOT EXISTS Payroll(id INTEGER PRIMARY KEY, employee_id INTEGER NOT NULL REFERENCES Employees(id), period TEXT NOT NULL, revision INTEGER NOT NULL, current INTEGER NOT NULL DEFAULT 1, snapshot TEXT NOT NULL, created TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%S+05:00','now','+5 hours')), UNIQUE(employee_id,period,revision));
+CREATE UNIQUE INDEX IF NOT EXISTS payroll_current ON Payroll(employee_id,period) WHERE current=1;
+CREATE TABLE IF NOT EXISTS PayrollItems(id INTEGER PRIMARY KEY, payroll_id INTEGER NOT NULL REFERENCES Payroll(id), kind TEXT NOT NULL, name TEXT NOT NULL, amount TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS AuditLog(id INTEGER PRIMARY KEY, user_id INTEGER REFERENCES Users(id), action TEXT NOT NULL, details TEXT NOT NULL, created TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%S+05:00','now','+5 hours')));
+CREATE TABLE IF NOT EXISTS PayrollDrafts(employee_id INTEGER NOT NULL REFERENCES Employees(id), period TEXT NOT NULL, data TEXT NOT NULL, version INTEGER NOT NULL DEFAULT 1, PRIMARY KEY(employee_id,period));
+CREATE TABLE IF NOT EXISTS Payments(id INTEGER PRIMARY KEY, payroll_id INTEGER NOT NULL REFERENCES Payroll(id), amount TEXT NOT NULL, reference TEXT NOT NULL, paid_on TEXT NOT NULL, method TEXT NOT NULL, void INTEGER NOT NULL DEFAULT 0, UNIQUE(payroll_id,reference));
+CREATE TABLE IF NOT EXISTS EmploymentEvents(id INTEGER PRIMARY KEY, employee_id INTEGER NOT NULL REFERENCES Employees(id), user_id INTEGER NOT NULL REFERENCES Users(id), event TEXT NOT NULL, effective_date TEXT NOT NULL, reason TEXT NOT NULL, snapshot TEXT NOT NULL, created TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%S+05:00','now','+5 hours')));

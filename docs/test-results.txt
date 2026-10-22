@@ -1,0 +1,6 @@
+Executed: 2026-10-22, Windows, Python 3.12.13
+Command: python -m pytest tests/test_payroll.py -q
+Runtime: pandas 3.0.1, reportlab 4.4.9, openpyxl 3.1.5, pytest 9.1.1
+
+.......................                                                  [100%]
+23 passed in 17.19s
